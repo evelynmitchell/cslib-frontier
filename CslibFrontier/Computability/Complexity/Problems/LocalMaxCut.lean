@@ -7,6 +7,7 @@ Authors: Evelyn Mitchell, Fable 5.2
 module
 -- upstream: candidate
 
+public import CslibFrontier.Computability.Complexity.Classes.TFNP.Subclasses.Flip
 public import CslibFrontier.Computability.Complexity.Problems.MaxCut
 public import CslibFrontier.GameTheory.Congestion.PLS
 import CslibFrontier.Foundations.Data.List.Blocks
@@ -109,10 +110,6 @@ namespace LocalMaxCut
 /-- The side assignment of a bit string; vertices beyond its length are on side `false`. -/
 @[expose] def side (w : List Bool) (v : ℕ) : Bool := w.getD v false
 
-/-- The bit string `w` with bit `v` flipped. -/
-@[expose] def flip (w : List Bool) (v : ℕ) : List Bool :=
-  (List.range w.length).map fun j => if j = v then !w.getD j false else w.getD j false
-
 /-- The weight of the cut `w` of `G`: the total weight of the valid edges whose endpoints are on
 different sides. -/
 @[expose] def cutValue (G : LocalMaxCutInstance) (w : List Bool) : ℕ :=
@@ -142,7 +139,7 @@ and both resources of an edge of weight `w` have cost table `[0, w]`. -/
 weight of the cut. -/
 @[expose] def check (G : LocalMaxCutInstance) (w : List Bool) : Bool :=
   decide (w.length = G.vertices) &&
-    (List.range G.vertices).all fun v => decide (cutValue G (flip w v) ≤ cutValue G w)
+    (List.range G.vertices).all fun v => decide (cutValue G (flipBit w v) ≤ cutValue G w)
 
 /-! ### Polynomial-time bounds -/
 
@@ -174,13 +171,6 @@ variable {γ : Type} {encIn : γ ↪ List Bool} {G : γ → LocalMaxCutInstance}
 theorem validEdges_polyTime (hG : ComputableInPolyTime G encIn encLocalMaxCut) :
     ComputableInPolyTime (fun x => (G x).validEdges) encIn (encList encWeightedEdge) := by
   unfold LocalMaxCutInstance.validEdges
-  fun_prop
-
-@[fun_prop]
-private theorem flip_polyTime (hw : ComputableInPolyTime w encIn encBits)
-    (hv : ComputableInPolyTime v encIn encUnary) :
-    ComputableInPolyTime (fun x => flip (w x) (v x)) encIn encBits := by
-  unfold flip
   fun_prop
 
 private theorem side_eq_getD_min (w : List Bool) (v : ℕ) :
@@ -234,10 +224,6 @@ theorem cutOf_polyTime :
 /-- The total weight of the non-loop edges, the only ones a cut can separate. -/
 @[expose] def nonLoopWeight (E : List WeightedEdge) : ℕ :=
   ((E.filter fun e => decide (e.u ≠ e.v)).map WeightedEdge.weight).sum
-
-/-- Flipping a bit preserves the length. -/
-theorem length_flip (w : List Bool) (v : ℕ) : (flip w v).length = w.length := by
-  simp [flip]
 
 /-- The congestion game has one player per vertex. -/
 theorem players_toCongestion (G : LocalMaxCutInstance) :
@@ -394,15 +380,15 @@ theorem potential_toCongestion_add_cutValue (G : LocalMaxCutInstance) (w : List 
   exact edge_identity (side w) _ _ _
 
 private theorem updateProfile_flip (w : List Bool) (i : ℕ) :
-    CongestionCode.updateProfile (profileOf w) i (!side w i).toNat = profileOf (flip w i) := by
+    CongestionCode.updateProfile (profileOf w) i (!side w i).toNat = profileOf (flipBit w i) := by
   apply List.ext_getElem
-  · simp [CongestionCode.updateProfile, profileOf, flip]
+  · simp [CongestionCode.updateProfile, profileOf, flipBit]
   · intro j h1 h2
     have hj : j < w.length := by simpa [CongestionCode.updateProfile, profileOf] using h1
     by_cases hji : j = i
     · subst hji
-      simp [CongestionCode.updateProfile, profileOf, flip, side]
-    · simp [CongestionCode.updateProfile, profileOf, flip, hji, hj, List.getD_eq_getElem?_getD]
+      simp [CongestionCode.updateProfile, profileOf, flipBit, side]
+    · simp [CongestionCode.updateProfile, profileOf, flipBit, hji, hj, List.getD_eq_getElem?_getD]
 
 private theorem updateProfile_self (p : List ℕ) (i : ℕ) :
     CongestionCode.updateProfile p i (p.getD i 0) = p := by
@@ -441,7 +427,7 @@ end LocalMaxCut
 weight of the cut. -/
 @[expose] def LocalMaxCut (G : LocalMaxCutInstance) (w : List Bool) : Prop :=
   w.length = G.vertices ∧
-    ∀ v < G.vertices, LocalMaxCut.cutValue G (LocalMaxCut.flip w v) ≤ LocalMaxCut.cutValue G w
+    ∀ v < G.vertices, LocalMaxCut.cutValue G (flipBit w v) ≤ LocalMaxCut.cutValue G w
 
 namespace LocalMaxCut
 
@@ -451,11 +437,11 @@ theorem pureNash_toCongestion_iff (G : LocalMaxCutInstance) (u : List Bool) :
     CongestionCode.PureNash (toCongestion G) u ↔
       u.length = (toCongestion G).vertexLength ∧ LocalMaxCut G (cutOf G u) := by
   have key : ∀ v, (toCongestion G).potential (profileOf (cutOf G u)) ≤
-      (toCongestion G).potential (profileOf (flip (cutOf G u) v)) ↔
-        cutValue G (flip (cutOf G u) v) ≤ cutValue G (cutOf G u) := by
+      (toCongestion G).potential (profileOf (flipBit (cutOf G u) v)) ↔
+        cutValue G (flipBit (cutOf G u) v) ≤ cutValue G (cutOf G u) := by
     intro v
     have h1 := potential_toCongestion_add_cutValue G (cutOf G u)
-    have h2 := potential_toCongestion_add_cutValue G (flip (cutOf G u) v)
+    have h2 := potential_toCongestion_add_cutValue G (flipBit (cutOf G u) v)
     omega
   rw [CongestionCode.pureNash_iff, ← profileOf_cutOf, players_toCongestion]
   refine and_congr_right fun _ => ⟨fun h => ⟨length_cutOf G u, fun v hv => (key v).1 ?_⟩,
