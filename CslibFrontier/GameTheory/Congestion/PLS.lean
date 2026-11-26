@@ -68,8 +68,11 @@ arbitrary costs `c_e(i)`. Missing cost-table entries read as `0`, resource indic
 `[0, resources)` are ignored, and a player with no listed strategy gets the single empty strategy,
 so every code describes a game.
 
-The completeness half of [FabrikantPapadimitriouTalwar2004] (Lecture #19, Theorem 3.1, proved by
-a reduction from local Max-Cut) is not formalized.
+The completeness half of [FabrikantPapadimitriouTalwar2004] (Lecture #19, Theorem 3.1) is proved
+by a reduction from local Max-Cut. The reduction is
+`Cslib.Complexity.LocalMaxCut.searchReducible_pureNash` in
+`CslibFrontier.Computability.Complexity.Problems.LocalMaxCut`; the `PLS`-hardness of local Max-Cut
+is not formalized, so completeness is not either.
 
 ## References
 
@@ -107,23 +110,25 @@ namespace CongestionCode
 /-! ### Reading a code -/
 
 /-- The number of players. -/
-def players (c : CongestionCode) : ℕ := c.playerStrategies.length
+@[expose] def players (c : CongestionCode) : ℕ := c.playerStrategies.length
 
 /-- The number of resources, one per cost table. -/
-def resources (c : CongestionCode) : ℕ := c.costTables.length
+@[expose] def resources (c : CongestionCode) : ℕ := c.costTables.length
 
 /-- The listed strategies of player `i`. -/
-def strategies (c : CongestionCode) (i : ℕ) : List (List ℕ) := c.playerStrategies.getD i []
+@[expose] def strategies (c : CongestionCode) (i : ℕ) : List (List ℕ) :=
+  c.playerStrategies.getD i []
 
 /-- The number of strategies of player `i`: a player with no listed strategy gets one, the empty
 strategy. -/
-def numStrategies (c : CongestionCode) (i : ℕ) : ℕ := max 1 (c.strategies i).length
+@[expose] def numStrategies (c : CongestionCode) (i : ℕ) : ℕ :=
+  max 1 (c.strategies i).length
 
 /-- The resource indices of strategy `k` of player `i`. -/
-def strategy (c : CongestionCode) (i k : ℕ) : List ℕ := (c.strategies i).getD k []
+@[expose] def strategy (c : CongestionCode) (i k : ℕ) : List ℕ := (c.strategies i).getD k []
 
 /-- The cost table of resource `e`. -/
-def costs (c : CongestionCode) (e : ℕ) : List ℕ := c.costTables.getD e []
+@[expose] def costs (c : CongestionCode) (e : ℕ) : List ℕ := c.costTables.getD e []
 
 /-- The width of a player's block in a profile string; it is at least every strategy count. -/
 def width (c : CongestionCode) : ℕ := c.playerStrategies.flatten.length + 1
@@ -132,22 +137,23 @@ def width (c : CongestionCode) : ℕ := c.playerStrategies.flatten.length + 1
 def vertexLength (c : CongestionCode) : ℕ := c.players * c.width
 
 /-- The load of resource `e` at a profile listed as strategy indices. -/
-def load (c : CongestionCode) (p : List ℕ) (e : ℕ) : ℕ :=
+@[expose] def load (c : CongestionCode) (p : List ℕ) (e : ℕ) : ℕ :=
   (List.range c.players).countP fun i => decide (e ∈ c.strategy i (p.getD i 0))
 
 /-- Rosenthal's potential of a profile listed as strategy indices: the sum over resources `e` of
 the first `load p e` entries of the cost table of `e`. -/
-def potential (c : CongestionCode) (p : List ℕ) : ℕ :=
+@[expose] def potential (c : CongestionCode) (p : List ℕ) : ℕ :=
   ((List.range c.resources).map fun e => ((c.costs e).take (c.load p e)).sum).sum
 
 /-! ### Profile strings -/
 
 /-- Strategy `k` of player `i` if it exists, and strategy `0` otherwise. -/
-def clampStrategy (c : CongestionCode) (i k : ℕ) : ℕ := if k < c.numStrategies i then k else 0
+def clampStrategy (c : CongestionCode) (i k : ℕ) : ℕ :=
+  if k < c.numStrategies i then k else 0
 
 /-- The strategy indices of a profile string: player `i` plays the number of ones in its block,
 clamped to a strategy index. -/
-def decodeList (c : CongestionCode) (u : List Bool) : List ℕ :=
+@[expose] def decodeList (c : CongestionCode) (u : List Bool) : List ℕ :=
   (List.range c.players).map fun i =>
     c.clampStrategy i ((BitString.listBlock c.width u i).count true)
 
@@ -163,7 +169,7 @@ def moves (c : CongestionCode) : List (ℕ × ℕ) :=
   (List.range c.players).flatMap fun i => (List.range (c.numStrategies i)).map fun k => (i, k)
 
 /-- The list `p` with entry `i` replaced by `k`. -/
-def updateProfile (p : List ℕ) (i k : ℕ) : List ℕ :=
+@[expose] def updateProfile (p : List ℕ) (i k : ℕ) : List ℕ :=
   (List.range p.length).map fun j => if j = i then k else p.getD j 0
 
 /-- Whether the deviation `m` strictly decreases the potential of `p`. -/
@@ -238,8 +244,9 @@ private theorem clampStrategy_polyTime {i k : γ → ℕ}
     ComputableInPolyTime (fun x => (c x).clampStrategy (i x) (k x)) encIn encUnary := by
   unfold clampStrategy; fun_prop
 
+/-- The strategy indices of a profile string are computable in polynomial time. -/
 @[fun_prop]
-private theorem decodeList_polyTime {u : γ → List Bool}
+theorem decodeList_polyTime {u : γ → List Bool}
     (hc : ComputableInPolyTime c encIn encCongestion)
     (hu : ComputableInPolyTime u encIn encBits) :
     ComputableInPolyTime (fun x => (c x).decodeList (u x)) encIn (encList encUnary) := by
