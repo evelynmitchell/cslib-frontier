@@ -713,6 +713,7 @@ public import CslibFrontier.Computability.GenericRAM.Native.Nat
 public import CslibFrontier.Logics.Propositional.QBF.Arithmetization
 public import CslibFrontier.Foundations.LinearAlgebra.Matrix.IntegerKernel
 public import CslibFrontier.Algorithms.WordRAM.ExactTriangle.WitnessScan.Cell
+public import CslibFrontier.Computability.Complexity.Problems.LocalMaxCut
 public import CslibFrontier.Foundations.Quantum.Algebra.CharacterFamily
 public import CslibFrontier.Computability.Circuit.Boolean.PolynomialTime
 public import CslibFrontier.Computability.Distributed.Paxos.Liveness.SynodProtocolCohort
