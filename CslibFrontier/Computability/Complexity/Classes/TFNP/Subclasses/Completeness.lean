@@ -146,7 +146,9 @@ theorem leafRel_searchReducible_Leaf {n : α → ℕ} {N₁ N₂ : α × List Bo
       hedge _ (hN₁_len a u hu), hedge _ (hN₂_len a u hu)]
   exact ⟨hu, by simpa only [hodd] using hw.2⟩
 
-private theorem exists_costCodes {n : α → ℕ} {C : α × List Bool → ℕ}
+/-- Compile a polynomial-time cost function into circuit codes whose outputs, read as binary
+numbers with leading zeros, are the costs on the prescribed input cube. -/
+theorem exists_costCodes {n : α → ℕ} {C : α × List Bool → ℕ}
     (hn : ComputableInPolyTime n enc encUnary)
     (hC : ComputableInPolyTime C (encPair enc encBits) encNat) :
     ∃ code : α → CircuitCode, ComputableInPolyTime code enc encCode ∧

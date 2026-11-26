@@ -1415,6 +1415,7 @@ public import CslibFrontier.DataStructure.FusionTree.WordRAM.Node.Correction
 public import CslibFrontier.Probability.HypothesisSelection.Likelihood
 public import CslibFrontier.GameTheory.Network.InfluenceMaximization
 public import CslibFrontier.Computability.Complexity.Problems.NCL.ConstraintGraph.Subdivision
+public import CslibFrontier.Computability.Complexity.Classes.TFNP.Subclasses.Flip
 public import CslibFrontier.Computability.GenericRAM.Native.ExpTimePolySpace
 public import CslibFrontier.Computability.Circuit.Frontier.Layouts.Switched.Sheppard
 public import CslibFrontier.Computability.Complexity.Classes.Oracle.PP
